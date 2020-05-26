@@ -228,7 +228,7 @@ app.post('/api/meetings', (req, res) => {
 
 app.put('/api/meetings/:id', (req, res) => {
     console.log(req.body);
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { description: req.body.description, place: req.body.place, time: req.body.time, day: req.body.day } }, { upsert: false }).then(
+    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { description: req.body.description, place: req.body.place, time: req.body.time, day: req.body.day, status: req.query.action } }, { upsert: false }).then(
         result => res.sendStatus(204),
         error => { console.log(error); res.send({}); }
     );

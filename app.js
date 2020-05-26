@@ -18,6 +18,84 @@ const MongoClient = require("mongodb").MongoClient,
     ObjectId = require("mongodb").ObjectID;
 const mongoClient = new MongoClient("mongodb://localhost:27017/", { useNewUrlParser: true, useUnifiedTopology: true });
 
+// Configure Passport
+const passport = require('passport'),
+    LocalStrategy = require('passport-local').Strategy
+session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
+
+app.use(session(
+    {
+        cookie: {
+            maxAge: 3600000
+        },
+        store: new MongoStore({
+            client: mongoClient,
+            dbName: 'bgb'
+        }),
+        secret: '1234',
+        resave: false,
+        saveUninitialized: true
+    }
+));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser(function (user, done) {
+    done(null, user._id);
+});
+
+passport.deserializeUser(function (id, done) {
+    app.locals.users.findOne({ _id: id }, function (err, user) {
+        done(err, user);
+    });
+});
+
+passport.use('local', new LocalStrategy(
+    function (username, password, done) {
+        app.locals.users.findOne({ 'username': username },
+            function (err, user) {
+                if (err)
+                    return done(err);
+                if (!user) {
+                    console.log('User Not Found with username ' + username);
+                    return done(null, false, { 'message': 'User Not found.' });
+                }
+                if ((user.password !== password)) {
+                    console.log('Invalid Password');
+                    return done(null, false, { 'message': 'Invalid Password' });
+                }
+                return done(null, user);
+            }
+        );
+    })
+);
+
+passport.authenticationMiddleware = function () {
+    return function (req, res, next) {
+        if (req.isAuthenticated()) {
+            return next()
+        }
+        res.sendStatus(401)
+    }
+}
+
+app.post('/api/login', passport.authenticate('local', {
+    successRedirect: '/api/games',
+    failureRedirect: '/api/error'
+}))
+
+app.get('/api/logout', function (req, res) {
+    req.logout();
+    res.sendStatus(204);
+});
+
+app.get("/api/error"), (req, res) => {
+    return res.status(401).send({ 'error': 'Bad Credentials' })
+}
+
+
+
 app.get('/api/db/init', (req, res) => {
     if (req.body) {
         const initUsers = [
@@ -108,7 +186,7 @@ app.get('/api/users/:id', (req, res) => {
 
 app.post('/api/users/names', (req, res) => {
     req.body.ids = req.body.ids.map(item => new ObjectId(item));
-    req.app.locals.users.find({ _id: { $in: req.body.ids },  }, { name: 1, contribs: 1 }).toArray().then(
+    req.app.locals.users.find({ _id: { $in: req.body.ids }, }, { name: 1, contribs: 1 }).toArray().then(
         result => res.send(result),
         error => { console.log(error); res.send([]); }
     );
@@ -149,7 +227,8 @@ app.post('/api/meetings', (req, res) => {
 
 
 app.put('/api/meetings/:id', (req, res) => {
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: req.body }, { upsert: false }).then(
+    console.log(req.body);
+    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { description: req.body.description, place: req.body.place, time: req.body.time, day: req.body.day } }, { upsert: false }).then(
         result => res.sendStatus(204),
         error => { console.log(error); res.send({}); }
     );

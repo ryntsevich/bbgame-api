@@ -206,6 +206,13 @@ app.post('/api/users', (req, res) => {
     );
 });
 
+app.put('/api/users/:id', (req, res) => {
+    req.app.locals.users.updateOne({ _id: new ObjectId(req.params.id) }, [{$set: req.body}, {$unset: '_id'}], { upsert: false }).then(
+        result => {console.log(result);res.sendStatus(204)},
+        error => { console.log(error); res.send({}); }
+    );
+});
+
 
 app.get('/api/meetings', (req, res) => {
     req.app.locals.meetings.find({}).toArray().then(

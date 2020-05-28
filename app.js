@@ -242,23 +242,8 @@ app.post('/api/meetings', (req, res) => {
 
 app.put('/api/meetings/:id', (req, res) => {
     console.log(req.body);
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { description: req.body.description, place: req.body.place, time: req.body.time, day: req.body.day, status: req.body.status } }, { upsert: false }).then(
-        result => res.sendStatus(204),
-        error => { console.log(error); res.send({}); }
-    );
-});
-
-
-app.put('/api/meetings/:id/close', (req, res) => {
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: req.body.status } }, { upsert: false }).then(
-        result => res.sendStatus(204),
-        error => { console.log(error); res.send({}); }
-    );
-});
-
-app.put('/api/meetings/:id/repeal', (req, res) => {
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: req.body.status } }, { upsert: false }).then(
-        result => res.sendStatus(204),
+    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, [{$set: req.body}, {$unset: '_id'}], { upsert: false }).then(
+        result => {console.log(result);res.sendStatus(204)},
         error => { console.log(error); res.send({}); }
     );
 });

@@ -192,6 +192,20 @@ app.post('/api/users/names', (req, res) => {
     );
 });
 
+app.post('/api/users', (req, res) => {
+    let user = req.body;
+    user._id = new ObjectId(user._id);
+    user.img = "images/avatar.jpg";
+    user.playedGames = [];
+    user.collectionGames = [];
+    user.wishGames = [];
+
+    req.app.locals.users.insertOne(user).then(
+        result => res.send(result.ops[0]),
+        error => { console.log(error); res.sendStatus(400); }
+    );
+});
+
 
 app.get('/api/meetings', (req, res) => {
     req.app.locals.meetings.find({}).toArray().then(
@@ -228,7 +242,7 @@ app.post('/api/meetings', (req, res) => {
 
 app.put('/api/meetings/:id', (req, res) => {
     console.log(req.body);
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { description: req.body.description, place: req.body.place, time: req.body.time, day: req.body.day, status: req.body.status} }, { upsert: false }).then(
+    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { description: req.body.description, place: req.body.place, time: req.body.time, day: req.body.day, status: req.body.status } }, { upsert: false }).then(
         result => res.sendStatus(204),
         error => { console.log(error); res.send({}); }
     );
@@ -236,7 +250,14 @@ app.put('/api/meetings/:id', (req, res) => {
 
 
 app.put('/api/meetings/:id/close', (req, res) => {
-    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: req.body.status} }, { upsert: false }).then(
+    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: req.body.status } }, { upsert: false }).then(
+        result => res.sendStatus(204),
+        error => { console.log(error); res.send({}); }
+    );
+});
+
+app.put('/api/meetings/:id/repeal', (req, res) => {
+    req.app.locals.meetings.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: req.body.status } }, { upsert: false }).then(
         result => res.sendStatus(204),
         error => { console.log(error); res.send({}); }
     );

@@ -228,13 +228,6 @@ app.get('/api/meetings/:id', (req, res) => {
     );
 });
 
-app.delete('/api/meetings/:id', (req, res) => {
-    req.app.locals.meetings.deleteOne({ _id: new ObjectId(req.params.id) }).then(
-        result => res.sendStatus(204),
-        error => { console.log(error); res.sendStatus(500); }
-    );
-});
-
 app.post('/api/meetings', (req, res) => {
     let meeting = req.body;
     meeting._id = new ObjectId(meeting._id);
